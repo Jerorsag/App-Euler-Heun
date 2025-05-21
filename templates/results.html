@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados - {{ method_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .result-card {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .step-table {
+        font-size: 0.9em;
+    }
+    .step-table th {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+        border: none;
+    }
+    .step-table td {
+        vertical-align: middle;
+    }
+    .method-formula {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        font-family: 'Courier New', monospace;
+    }
+    .plot-container {
+        text-align: center;
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .calculation-detail {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85em;
+        background: #f1f3f4;
+        padding: 5px;
+        border-radius: 3px;
+    }
+    .navigation-buttons {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navegación superior -->
+    <div class="navigation-buttons mb-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm">
+                    <div>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Nuevo Problema
+                        </a>
+                        <a href="{{ url_for('history') }}" class="btn btn-outline-info">
+                            <i class="fas fa-history me-1"></i>Ver Historial
+                        </a>
+                    </div>
+                    <div>
+                        <button class="btn btn-success" onclick="downloadResults()">
+                            <i class="fas fa-download me-1"></i>Descargar Resultados
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encabezado de resultados -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="result-card card">
+                <div class="card-header bg-primary text-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                {{ method_name }}
+                            </h2>
+                            <p class="mb-0 opacity-75">Solución numérica de ecuación diferencial</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="badge bg-light text-dark p-2">
+                                <i class="fas fa-function me-1"></i>
+                                $\frac{dy}{dx} = {{ function }}$
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Información del problema -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-info-circle text-primary me-2"></i>Información del Problema</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Función:</strong> $f(x,y) = {{ function }}$</li>
+                                <li><strong>Condición inicial:</strong> {{ results.summary.initial_value }}</li>
+                                <li><strong>Intervalo:</strong> {{ results.summary.interval }}</li>
+                                <li><strong>Tamaño de paso:</strong> $h = {{ results.summary.step_size }}$</li>
+                                <li><strong>Número de pasos:</strong> {{ results.summary.total_steps }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-calculator text-success me-2"></i>Información del Método</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Método:</strong> {{ results.method_info.name }}</li>
+                                <li><strong>Orden:</strong> {{ results.method_info.order }}</li>
+                                <li><strong>Error:</strong> {{ results.method_info.error_type }}</li>
+                                <li><strong>Resultado final:</strong> 
+                                    <span class="badge bg-success">{{ results.summary.final_value }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Fórmula del método -->
+                    <div class="method-formula p-3 rounded mt-3">
+                        <h6><i class="fas fa-formula me-1"></i>Fórmula del Método:</h6>
+                        <p class="text-center mb-0">
+                            $${{ results.method_info.formula }}$$
+                        </p>
+                        {% if results.method_info.steps %}
+                        <div class="mt-2">
+                            <strong>Pasos del algoritmo:</strong>
+                            <ol class="mb-0">
+                                {% for step in results.method_info.steps %}
+                                <li>{{ step }}</li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfica -->
+        <div class="col-lg-8 mb-4">
+            <div class="result-card card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>
+                        Gráfica de la Solución
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="plot-container">
+                        {% if plot_url %}
+                        <img src="{{ plot_url }}" alt="Gráfica de la solución" class="img-fluid rounded">
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No se pudo generar la gráfica
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de resultados -->
+        <div class="col-lg-4 mb-4">
+            <div class="result-card card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Resultados Paso a Paso
+                    </h4>
+                </div>
+                <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                    <table class="table table-striped step-table mb-0">
+                        <thead class="sticky-top">
+                            <tr>
+                                <th>Paso</th>
+                                <th>$x_i$</th>
+                                <th>$y_i$</th>
+                                {% if results.method_info.name == 'Método de Heun (Euler Mejorado)' %}
+                                <th>$k_1$</th>
+                                <th>$y_{pred}$</th>
+                                <th>$k_2$</th>
+                                {% else %}
+                                <th>$f(x_i, y_i)$</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for step in results.steps_table %}
+                            <tr>
+                                <td><strong>{{ step.step }}</strong></td>
+                                <td>{{ "%.6f"|format(step.x) }}</td>
+                                <td>{{ "%.6f"|format(step.y) }}</td>
+                                
+                                {% if results.method_info.name == 'Método de Heun (Euler Mejorado)' %}
+                                    <td>{{ "%.6f"|format(step.k1) if step.k1 != 'N/A' else 'N/A' }}</td>
+                                    <td>{{ "%.6f"|format(step.y_predictor) if step.y_predictor is defined else '-' }}</td>
+                                    <td>{{ "%.6f"|format(step.k2) if step.k2 is defined else '-' }}</td>
+                                {% else %}
+                                    <td>{{ "%.6f"|format(step.slope) if step.slope != 'N/A' else 'N/A' }}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalles de cálculos (expandible) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="result-card card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <button class="btn btn-link text-decoration-none text-dark p-0" 
+                                data-bs-toggle="collapse" data-bs-target="#calculationDetails">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Detalles de Cálculos (Expandir)
+                        </button>
+                    </h4>
+                </div>
+                <div class="collapse" id="calculationDetails">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Paso</th>
+                                        <th>Cálculo Detallado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for step in results.steps_table %}
+                                        {% if step.calculation %}
+                                        <tr>
+                                            <td><strong>{{ step.step }} → {{ step.step + 1 }}</strong></td>
+                                            <td>
+                                                <div class="calculation-detail">
+                                                    {{ step.calculation }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary" onclick="goBack()">
+                    <i class="fas fa-arrow-left me-1"></i>Resolver Otro Problema
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveToHistory()">
+                    <i class="fas fa-save me-1"></i>Guardar en Historial
+                </button>
+                <button type="button" class="btn btn-info" onclick="shareResults()">
+                    <i class="fas fa-share me-1"></i>Compartir Resultados
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function goBack() {
+    window.location.href = '{{ url_for("index") }}';
+}
+
+function downloadResults() {
+    // Crear un elemento temporal para descargar
+    const content = generateResultsText();
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'resultados_edo_{{ method_name.replace(" ", "_") }}.txt';
+    document.body.appendChild(a);
+    a.click();
+    
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+function generateResultsText() {
+    let content = `RESULTADOS - {{ method_name }}\n`;
+    content += `${'='.repeat(50)}\n\n`;
+    content += `Función: dy/dx = {{ function }}\n`;
+    content += `Condición inicial: {{ results.summary.initial_value }}\n`;
+    content += `Intervalo: {{ results.summary.interval }}\n`;
+    content += `Tamaño de paso: h = {{ results.summary.step_size }}\n`;
+    content += `Número de pasos: {{ results.summary.total_steps }}\n`;
+    content += `Resultado final: {{ results.summary.final_value }}\n\n`;
+    
+    content += `TABLA DE RESULTADOS:\n`;
+    content += `${'='.repeat(50)}\n`;
+    {% for step in results.steps_table %}
+    content += `Paso {{ step.step }}: x = {{ "%.6f"|format(step.x) }}, y = {{ "%.6f"|format(step.y) }}\n`;
+    {% endfor %}
+    
+    return content;
+}
+
+function saveToHistory() {
+    // Esta función se conectaría con el backend para guardar en historial
+    alert('Resultado guardado en el historial');
+}
+
+function shareResults() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Resultados EDO - {{ method_name }}',
+            text: 'Solución de ecuación diferencial usando {{ method_name }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copiar URL al portapapeles
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('URL copiada al portapapeles');
+        });
+    }
+}
+
+// Renderizar ecuaciones matemáticas cuando la página cargue
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.MathJax) {
+        MathJax.typesetPromise();
+    }
+});
+</script>
+{% endblock %}

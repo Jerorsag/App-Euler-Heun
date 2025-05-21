@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Resolver Ecuaciones Diferenciales{% endblock %}
+
+{% block extra_head %}
+<style>
+    .function-help {
+        font-size: 0.9em;
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+    .method-card {
+        transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .method-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .step-indicator {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Encabezado principal -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-function text-primary me-3"></i>
+                Solver de Ecuaciones Diferenciales
+            </h1>
+            <p class="lead text-muted">
+                Resuelve ecuaciones diferenciales ordinarias utilizando los métodos de <strong>Euler</strong> y <strong>Heun</strong>
+            </p>
+            <div class="alert alert-info">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>Formato de ecuación:</strong> Ingresa tu función como $\frac{dy}{dx} = f(x, y)$
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Configuración del Problema
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form id="odeForm" novalidate>
+                        <!-- Paso 1: Función -->
+                        <div class="mb-4">
+                            <div class="step-indicator rounded p-2 mb-3 d-inline-block">
+                                <i class="fas fa-step-forward me-1"></i>PASO 1: Define la función
+                            </div>
+                            
+                            <label for="function" class="form-label fw-bold">
+                                Función $f(x, y)$:
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$\frac{dy}{dx} =$</span>
+                                <input type="text" class="form-control" id="function" name="function" 
+                                       placeholder="Ejemplo: x + y, sin(x)*cos(y), x**2 - y" required>
+                                <button type="button" class="btn btn-outline-info" data-bs-toggle="collapse" data-bs-target="#functionHelp">
+                                    <i class="fas fa-question-circle"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">
+                                Por favor ingresa una función válida.
+                            </div>
+                            
+                            <!-- Ayuda para funciones -->
+                            <div class="collapse mt-2" id="functionHelp">
+                                <div class="function-help p-3 rounded">
+                                    <h6><i class="fas fa-info-circle me-1"></i>Funciones disponibles:</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Básicas:</strong><br>
+                                            <code>+, -, *, /, **</code><br>
+                                            <code>abs(), sqrt()</code>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Trigonométricas:</strong><br>
+                                            <code>sin(), cos(), tan()</code><br>
+                                            <code>arcsin(), arccos(), arctan()</code>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Exponenciales:</strong><br>
+                                            <code>exp(), log(), ln()</code><br>
+                                            <code>pi, e</code>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <strong>Ejemplos:</strong> 
+                                        <code>x + y</code>, 
+                                        <code>x*y - 2*x</code>, 
+                                        <code>sin(x) + cos(y)</code>, 
+                                        <code>x**2 - y**2</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 2: Condiciones iniciales -->
+                        <div class="mb-4">
+                            <div class="step-indicator rounded p-2 mb-3 d-inline-block">
+                                <i class="fas fa-step-forward me-1"></i>PASO 2: Condiciones iniciales
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="x0" class="form-label fw-bold">$x_0$ (inicial):</label>
+                                    <input type="number" class="form-control" id="x0" name="x0" 
+                                           value="0" step="any" required>
+                                    <div class="invalid-feedback">Valor numérico requerido.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="y0" class="form-label fw-bold">$y_0 = y(x_0)$:</label>
+                                    <input type="number" class="form-control" id="y0" name="y0" 
+                                           value="1" step="any" required>
+                                    <div class="invalid-feedback">Valor numérico requerido.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="xn" class="form-label fw-bold">$x_n$ (final):</label>
+                                    <input type="number" class="form-control" id="xn" name="xn" 
+                                           value="2" step="any" required>
+                                    <div class="invalid-feedback">Valor numérico requerido.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paso 3: Configuración del paso -->
+                        <div class="mb-4">
+                            <div class="step-indicator rounded p-2 mb-3 d-inline-block">
+                                <i class="fas fa-step-forward me-1"></i>PASO 3: Configuración del paso
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Método de configuración:</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="step_method" 
+                                               id="by_steps" value="steps" checked>
+                                        <label class="form-check-label" for="by_steps">
+                                            Por número de pasos
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="step_method" 
+                                               id="by_size" value="size">
+                                        <label class="form-check-label" for="by_size">
+                                            Por tamaño de paso
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div id="steps_input">
+                                        <label for="num_steps" class="form-label fw-bold">Número de pasos:</label>
+                                        <input type="number" class="form-control" id="num_steps" name="num_steps" 
+                                               value="10" min="1" max="1000">
+                                        <small class="form-text text-muted">
+                                            $h = \frac{x_n - x_0}{\text{num_steps}}$
+                                        </small>
+                                    </div>
+                                    
+                                    <div id="size_input" style="display: none;">
+                                        <label for="step_size" class="form-label fw-bold">Tamaño de paso $h$:</label>
+                                        <input type="number" class="form-control" id="step_size" name="step_size" 
+                                               value="0.1" step="any" min="0.001" max="1">
+                                        <small class="form-text text-muted">
+                                            Pasos = $\frac{x_n - x_0}{h}$
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="text-center">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <button type="button" class="btn btn-danger btn-lg w-100" 
+                                            onclick="solveODE('euler')" id="btnEuler">
+                                        <i class="fas fa-arrow-right me-2"></i>
+                                        Resolver con <strong>Euler</strong>
+                                    </button>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <button type="button" class="btn btn-success btn-lg w-100" 
+                                            onclick="solveODE('heun')" id="btnHeun">
+                                        <i class="fas fa-arrows-alt-h me-2"></i>
+                                        Resolver con <strong>Heun</strong>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-primary btn-lg" 
+                                        onclick="compareMethodsModal()" id="btnCompare">
+                                    <i class="fas fa-balance-scale me-2"></i>
+                                    Comparar Ambos Métodos
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ejemplos predefinidos -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">
+                <i class="fas fa-lightbulb text-warning me-2"></i>
+                Ejemplos Predefinidos
+            </h3>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="method-card card h-100" onclick="loadExample('simple')">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-star me-2"></i>Crecimiento Simple
+                    </h5>
+                    <p class="card-text">$\frac{dy}{dx} = y$</p>
+                    <p class="text-muted small">
+                        Condiciones: $y(0) = 1$, intervalo $[0, 2]$<br>
+                        Solución exacta: $y = e^x$
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="method-card card h-100" onclick="loadExample('linear')">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-chart-line me-2"></i>Ecuación Lineal
+                    </h5>
+                    <p class="card-text">$\frac{dy}{dx} = x + y$</p>
+                    <p class="text-muted small">
+                        Condiciones: $y(0) = 1$, intervalo $[0, 1]$<br>
+                        Problema clásico de EDO lineal
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="method-card card h-100" onclick="loadExample('nonlinear')">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">
+                        <i class="fas fa-wave-square me-2"></i>No Lineal
+                    </h5>
+                    <p class="card-text">$\frac{dy}{dx} = x^2 - y^2$</p>
+                    <p class="text-muted small">
+                        Condiciones: $y(0) = 0$, intervalo $[0, 2]$<br>
+                        Comportamiento no lineal interesante
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="d-none">
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
+         style="background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="text-center text-white">
+            <div class="spinner-border spinner-border-lg mb-3" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <h4>Resolviendo ecuación diferencial...</h4>
+            <p>Por favor espera mientras calculamos la solución</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Función para cambiar entre método de configuración de pasos
+document.querySelectorAll('input[name="step_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'steps') {
+            document.getElementById('steps_input').style.display = 'block';
+            document.getElementById('size_input').style.display = 'none';
+        } else {
+            document.getElementById('steps_input').style.display = 'none';
+            document.getElementById('size_input').style.display = 'block';
+        }
+    });
+});
+
+// Función para cargar ejemplos predefinidos
+function loadExample(type) {
+    const examples = {
+        'simple': {
+            function: 'y',
+            x0: 0,
+            y0: 1,
+            xn: 2,
+            num_steps: 10
+        },
+        'linear': {
+            function: 'x + y',
+            x0: 0,
+            y0: 1,
+            xn: 1,
+            num_steps: 10
+        },
+        'nonlinear': {
+            function: 'x**2 - y**2',
+            x0: 0,
+            y0: 0,
+            xn: 2,
+            num_steps: 20
+        }
+    };
+    
+    const example = examples[type];
+    if (example) {
+        document.getElementById('function').value = example.function;
+        document.getElementById('x0').value = example.x0;
+        document.getElementById('y0').value = example.y0;
+        document.getElementById('xn').value = example.xn;
+        document.getElementById('num_steps').value = example.num_steps;
+        
+        // Asegurarse de que esté en modo de pasos
+        document.getElementById('by_steps').checked = true;
+        document.getElementById('steps_input').style.display = 'block';
+        document.getElementById('size_input').style.display = 'none';
+    }
+}
+
+// Función para resolver EDO
+function solveODE(method) {
+    const form = document.getElementById('odeForm');
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+    
+    // Mostrar spinner
+    document.getElementById('loadingSpinner').classList.remove('d-none');
+    
+    const formData = new FormData();
+    formData.append('function', document.getElementById('function').value);
+    formData.append('x0', document.getElementById('x0').value);
+    formData.append('y0', document.getElementById('y0').value);
+    formData.append('xn', document.getElementById('xn').value);
+    
+    if (document.getElementById('by_steps').checked) {
+        formData.append('num_steps', document.getElementById('num_steps').value);
+    } else {
+        formData.append('step_size', document.getElementById('step_size').value);
+    }
+    
+    const url = method === 'euler' ? '/solve_euler' : '/solve_heun';
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.text();
+    })
+    .then(html => {
+        document.body.innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al resolver la ecuación: ' + (error.error || 'Error desconocido'));
+    })
+    .finally(() => {
+        document.getElementById('loadingSpinner').classList.add('d-none');
+    });
+}
+
+// Función placeholder para comparar métodos
+function compareMethodsModal() {
+    alert('Funcionalidad de comparación estará disponible en la próxima versión');
+}
+</script>
+{% endblock %}
