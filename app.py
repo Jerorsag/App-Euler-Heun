@@ -7,6 +7,7 @@ from config import Config
 # Importar modelos de métodos numéricos
 from models.euler import EulerMethod
 from models.heun import HeunMethod
+from models.runge_kutta import RungeKuttaMethod
 
 # Importar utilidades
 from utils.plotter import create_ode_plot
@@ -128,6 +129,58 @@ def solve_heun():
         return render_template('results.html',
                                results=results,
                                method_name="Método de Heun",
+                               plot_url=f"static/plots/{plot_filename}",
+                               function=function_str,
+                               parameters={'x0': x0, 'y0': y0, 'xn': xn, 'h': h})
+
+    except Exception as e:
+        return jsonify({'error': f'Error en el cálculo: {str(e)}'}), 500
+
+@app.route('/solve_runge_kutta', methods=['POST'])
+def solve_runge_kutta():
+    """Resolver ecuación diferencial usando método de Runge-Kutta."""
+    try:
+        # Obtener datos del formulario
+        data = request.get_json() if request.is_json else request.form
+
+        function_str = data['function']
+        x0 = float(data['x0'])
+        y0 = float(data['y0'])
+        xn = float(data['xn'])
+
+        # Determinar si es por número de pasos o tamaño de paso
+        if 'num_steps' in data and data['num_steps']:
+            num_steps = int(data['num_steps'])
+            h = (xn - x0) / num_steps
+        else:
+            h = float(data['step_size'])
+            num_steps = int((xn - x0) / h)
+
+        # Validar función
+        if not validate_function(function_str):
+            return jsonify({'error': 'Función inválida. Use sintaxis Python válida.'}), 400
+
+        # Resolver usando método de Runge-Kutta
+        rk = RungeKuttaMethod(function_str, x0, y0, h, num_steps)
+        results = rk.solve()
+
+        # Generar gráfica
+        plot_filename = f"runge_kutta_plot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        plot_path = create_ode_plot(results, "Método de Runge-Kutta", plot_filename)
+
+        # Guardar en historial
+        save_to_history({
+            'method': 'Runge-Kutta',
+            'function': function_str,
+            'x0': x0, 'y0': y0, 'xn': xn,
+            'h': h, 'steps': num_steps,
+            'timestamp': datetime.now().isoformat(),
+            'plot': plot_filename
+        })
+
+        return render_template('results.html',
+                               results=results,
+                               method_name="Método de Runge-Kutta",
                                plot_url=f"static/plots/{plot_filename}",
                                function=function_str,
                                parameters={'x0': x0, 'y0': y0, 'xn': xn, 'h': h})

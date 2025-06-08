@@ -36,7 +36,7 @@
                 Solver de Ecuaciones Diferenciales
             </h1>
             <p class="lead text-muted">
-                Resuelve ecuaciones diferenciales ordinarias utilizando los métodos de <strong>Euler</strong> y <strong>Heun</strong>
+                Resuelve ecuaciones diferenciales ordinarias utilizando los métodos de <strong>Euler</strong>, <strong>Heun</strong> y <strong>Runge-Kutta</strong>
             </p>
             <div class="alert alert-info">
                 <i class="fas fa-lightbulb me-2"></i>
@@ -62,13 +62,13 @@
                             <div class="step-indicator rounded p-2 mb-3 d-inline-block">
                                 <i class="fas fa-step-forward me-1"></i>PASO 1: Define la función
                             </div>
-                            
+
                             <label for="function" class="form-label fw-bold">
                                 Función $f(x, y)$:
                             </label>
                             <div class="input-group">
                                 <span class="input-group-text">$\frac{dy}{dx} =$</span>
-                                <input type="text" class="form-control" id="function" name="function" 
+                                <input type="text" class="form-control" id="function" name="function"
                                        placeholder="Ejemplo: x + y, sin(x)*cos(y), x**2 - y" required>
                                 <button type="button" class="btn btn-outline-info" data-bs-toggle="collapse" data-bs-target="#functionHelp">
                                     <i class="fas fa-question-circle"></i>
@@ -77,7 +77,7 @@
                             <div class="invalid-feedback">
                                 Por favor ingresa una función válida.
                             </div>
-                            
+
                             <!-- Ayuda para funciones -->
                             <div class="collapse mt-2" id="functionHelp">
                                 <div class="function-help p-3 rounded">
@@ -100,10 +100,10 @@
                                         </div>
                                     </div>
                                     <div class="mt-2">
-                                        <strong>Ejemplos:</strong> 
-                                        <code>x + y</code>, 
-                                        <code>x*y - 2*x</code>, 
-                                        <code>sin(x) + cos(y)</code>, 
+                                        <strong>Ejemplos:</strong>
+                                        <code>x + y</code>,
+                                        <code>x*y - 2*x</code>,
+                                        <code>sin(x) + cos(y)</code>,
                                         <code>x**2 - y**2</code>
                                     </div>
                                 </div>
@@ -115,23 +115,23 @@
                             <div class="step-indicator rounded p-2 mb-3 d-inline-block">
                                 <i class="fas fa-step-forward me-1"></i>PASO 2: Condiciones iniciales
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-md-4">
                                     <label for="x0" class="form-label fw-bold">$x_0$ (inicial):</label>
-                                    <input type="number" class="form-control" id="x0" name="x0" 
+                                    <input type="number" class="form-control" id="x0" name="x0"
                                            value="0" step="any" required>
                                     <div class="invalid-feedback">Valor numérico requerido.</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="y0" class="form-label fw-bold">$y_0 = y(x_0)$:</label>
-                                    <input type="number" class="form-control" id="y0" name="y0" 
+                                    <input type="number" class="form-control" id="y0" name="y0"
                                            value="1" step="any" required>
                                     <div class="invalid-feedback">Valor numérico requerido.</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="xn" class="form-label fw-bold">$x_n$ (final):</label>
-                                    <input type="number" class="form-control" id="xn" name="xn" 
+                                    <input type="number" class="form-control" id="xn" name="xn"
                                            value="2" step="any" required>
                                     <div class="invalid-feedback">Valor numérico requerido.</div>
                                 </div>
@@ -143,39 +143,39 @@
                             <div class="step-indicator rounded p-2 mb-3 d-inline-block">
                                 <i class="fas fa-step-forward me-1"></i>PASO 3: Configuración del paso
                             </div>
-                            
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Método de configuración:</label>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="step_method" 
+                                        <input class="form-check-input" type="radio" name="step_method"
                                                id="by_steps" value="steps" checked>
                                         <label class="form-check-label" for="by_steps">
                                             Por número de pasos
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="step_method" 
+                                        <input class="form-check-input" type="radio" name="step_method"
                                                id="by_size" value="size">
                                         <label class="form-check-label" for="by_size">
                                             Por tamaño de paso
                                         </label>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div id="steps_input">
                                         <label for="num_steps" class="form-label fw-bold">Número de pasos:</label>
-                                        <input type="number" class="form-control" id="num_steps" name="num_steps" 
+                                        <input type="number" class="form-control" id="num_steps" name="num_steps"
                                                value="10" min="1" max="1000">
                                         <small class="form-text text-muted">
                                             $h = \frac{x_n - x_0}{\text{num_steps}}$
                                         </small>
                                     </div>
-                                    
+
                                     <div id="size_input" style="display: none;">
                                         <label for="step_size" class="form-label fw-bold">Tamaño de paso $h$:</label>
-                                        <input type="number" class="form-control" id="step_size" name="step_size" 
+                                        <input type="number" class="form-control" id="step_size" name="step_size"
                                                value="0.1" step="any" min="0.001" max="1">
                                         <small class="form-text text-muted">
                                             Pasos = $\frac{x_n - x_0}{h}$
@@ -188,27 +188,27 @@
                         <!-- Botones de acción -->
                         <div class="text-center">
                             <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <button type="button" class="btn btn-danger btn-lg w-100" 
+                                <div class="col-md-4 mb-2">
+                                    <button type="button" class="btn btn-danger btn-lg w-100"
                                             onclick="solveODE('euler')" id="btnEuler">
                                         <i class="fas fa-arrow-right me-2"></i>
                                         Resolver con <strong>Euler</strong>
                                     </button>
                                 </div>
-                                <div class="col-md-6 mb-2">
-                                    <button type="button" class="btn btn-success btn-lg w-100" 
+                                <div class="col-md-4 mb-2">
+                                    <button type="button" class="btn btn-success btn-lg w-100"
                                             onclick="solveODE('heun')" id="btnHeun">
                                         <i class="fas fa-arrows-alt-h me-2"></i>
                                         Resolver con <strong>Heun</strong>
                                     </button>
                                 </div>
-                            </div>
-                            <div class="mt-3">
-                                <button type="button" class="btn btn-primary btn-lg" 
-                                        onclick="compareMethodsModal()" id="btnCompare">
-                                    <i class="fas fa-balance-scale me-2"></i>
-                                    Comparar Ambos Métodos
-                                </button>
+                                <div class="col-md-4 mb-2">
+                                    <button type="button" class="btn btn-warning btn-lg w-100"
+                                            onclick="solveODE('runge_kutta')" id="btnRungeKutta">
+                                        <i class="fas fa-star me-2"></i>
+                                        Resolver con <strong>Runge-Kutta</strong>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -225,8 +225,8 @@
                 Ejemplos Predefinidos
             </h3>
         </div>
-        
-        <div class="col-md-4 mb-3">
+
+        <div class="col-md-3 mb-3">
             <div class="method-card card h-100" onclick="loadExample('simple')">
                 <div class="card-body">
                     <h5 class="card-title text-primary">
@@ -240,8 +240,8 @@
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-4 mb-3">
+
+        <div class="col-md-3 mb-3">
             <div class="method-card card h-100" onclick="loadExample('linear')">
                 <div class="card-body">
                     <h5 class="card-title text-success">
@@ -255,8 +255,8 @@
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-4 mb-3">
+
+        <div class="col-md-3 mb-3">
             <div class="method-card card h-100" onclick="loadExample('nonlinear')">
                 <div class="card-body">
                     <h5 class="card-title text-danger">
@@ -270,12 +270,27 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="method-card card h-100" onclick="loadExample('oscillator')">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">
+                        <i class="fas fa-sync-alt me-2"></i>Oscilador
+                    </h5>
+                    <p class="card-text">$\frac{dy}{dx} = -x \cdot y$</p>
+                    <p class="text-muted small">
+                        Condiciones: $y(0) = 1$, intervalo $[0, 3]$<br>
+                        Ideal para comparar precisión RK4
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Loading Spinner -->
 <div id="loadingSpinner" class="d-none">
-    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
          style="background: rgba(0,0,0,0.5); z-index: 9999;">
         <div class="text-center text-white">
             <div class="spinner-border spinner-border-lg mb-3" role="status">
@@ -326,9 +341,16 @@ function loadExample(type) {
             y0: 0,
             xn: 2,
             num_steps: 20
+        },
+        'oscillator': {
+            function: '-x*y',
+            x0: 0,
+            y0: 1,
+            xn: 3,
+            num_steps: 15
         }
     };
-    
+
     const example = examples[type];
     if (example) {
         document.getElementById('function').value = example.function;
@@ -336,7 +358,7 @@ function loadExample(type) {
         document.getElementById('y0').value = example.y0;
         document.getElementById('xn').value = example.xn;
         document.getElementById('num_steps').value = example.num_steps;
-        
+
         // Asegurarse de que esté en modo de pasos
         document.getElementById('by_steps').checked = true;
         document.getElementById('steps_input').style.display = 'block';
@@ -351,23 +373,30 @@ function solveODE(method) {
         form.classList.add('was-validated');
         return;
     }
-    
+
     // Mostrar spinner
     document.getElementById('loadingSpinner').classList.remove('d-none');
-    
+
     const formData = new FormData();
     formData.append('function', document.getElementById('function').value);
     formData.append('x0', document.getElementById('x0').value);
     formData.append('y0', document.getElementById('y0').value);
     formData.append('xn', document.getElementById('xn').value);
-    
+
     if (document.getElementById('by_steps').checked) {
         formData.append('num_steps', document.getElementById('num_steps').value);
     } else {
         formData.append('step_size', document.getElementById('step_size').value);
     }
-    
-    const url = method === 'euler' ? '/solve_euler' : '/solve_heun';
+
+    let url;
+    if (method === 'euler') {
+        url = '/solve_euler';
+    } else if (method === 'heun') {
+        url = '/solve_heun';
+    } else if (method === 'runge_kutta') {
+        url = '/solve_runge_kutta';
+    }
     
     fetch(url, {
         method: 'POST',
